@@ -1,0 +1,61 @@
+<app-navbar></app-navbar>
+
+<!-- Users Table -->
+<nz-table #basicTable [nzData]="users" [nzBordered]="true" [nzLoading]="isLoadingUsers">
+  <thead>
+    <tr>
+      <th nzWidth="20%">ID</th>
+      <th nzWidth="30%">Email</th>
+      <th nzWidth="25%">Username</th>
+      <th nzWidth="25%">Roles</th>
+    </tr>
+  </thead>
+  <tbody>
+    @for (user of users; track user.id) {
+      <tr>
+        <td>{{ user.id }}</td>
+        <td>{{ user.email }}</td>
+        <td>{{ user.username }}</td>
+        <td>{{ user.roles.join(', ') }}</td>
+      </tr>
+    } @empty {
+      <tr>
+        <td colspan="4" class="text-center">No users available</td>
+      </tr>
+    }
+  </tbody>
+</nz-table>
+
+<!-- Tickets Table -->
+<nz-table #ticketTable [nzData]="tickets" [nzBordered]="true" [nzLoading]="isLoadingTickets">
+  <thead>
+    <tr>
+      <th nzWidth="15%">Own Ticket</th>
+      <th nzWidth="15%">Provider Ticket</th>
+      <th nzWidth="20%">Opened By</th>
+      <th nzWidth="20%">Assigned To</th>
+      <th nzWidth="15%">Required By</th>
+      <th nzWidth="15%">Status</th>
+    </tr>
+  </thead>
+  <tbody>
+    @for (ticket of tickets; track ticket.ownTicket) {
+      <tr>
+        <td>{{ ticket.ownTicket }}</td>
+        <td>{{ ticket.providerTicket }}</td>
+        <td>{{ ticket.openedBy }}</td>
+        <td>{{ ticket.assignedTo }}</td>
+        <td>{{ ticket.requiredBy }}</td>
+        <td>
+          <span [style.color]="ticket.ownStatus.color">
+            {{ ticket.ownStatus.name }}
+          </span>
+        </td>
+      </tr>
+    } @empty {
+      <tr>
+        <td colspan="6" class="text-center">No tickets available</td>
+      </tr>
+    }
+  </tbody>
+</nz-table>

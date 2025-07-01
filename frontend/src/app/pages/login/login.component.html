@@ -1,0 +1,81 @@
+<div class="flex items-center justify-center min-h-screen bg-gray-100">
+    <div class="bg-white p-8 rounded-lg shadow-md w-full max-w-md">
+      <img src="https://www.adsgt.com/adsgt.svg" alt="overhare" class="mx-auto mb-6 w-20" />
+      <h2 class="text-center text-2xl font-bold mb-4">Helpdesk by Overhare</h2>
+
+      <form ((submit))="onSubmit()" [formGroup]="loginForm" class="space-y-4">
+        <div>
+          <label for="email" class="block text-sm font-medium text-gray-700">Correo electrónico</label>
+          <input
+            id="email"
+            type="email"
+            formControlName="email"
+            placeholder="tu@ejemplo.com"
+            class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"
+          />
+        </div>
+
+        <div class="relative">
+          <label for="password" class="block text-sm font-medium text-gray-700">Contraseña</label>
+          <input
+            id="password"
+            [type]="passwordVisible ? 'text' : 'password'"
+            formControlName="password"
+            placeholder="Contraseña"
+            class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"
+          />
+          <span
+            class="absolute bottom-1.5 right-0 pr-3 flex items-center text-sm leading-3 cursor-pointer"
+            (click)="togglePasswordVisibility()"
+          >
+          @if(this.passwordVisible){
+            <lucide-angular [img]="Eye" class="my-icon"></lucide-angular>
+        }
+        @else{
+            <lucide-angular [img]="EyeClosed" class="my-icon"></lucide-angular>
+        }
+          </span>
+        </div>
+
+        <!-- <div class="flex items-center">
+          <input
+            id="rememberMe"
+            type="checkbox"
+            formControlName="rememberMe"
+            class="h-4 w-4 text-indigo-600 focus:ring-indigo-500 border-gray-300 rounded"
+          />
+          <label for="rememberMe" class="ml-2 block text-sm text-gray-900">Recordarme</label>
+        </div> -->
+
+        <div>
+          <button
+            type="submit"
+            [disabled]="isLoading || loginForm.invalid"
+            (click)="onSubmit()"
+            class="w-full flex justify-center py-2 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-black hover:bg-gray-800 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500"
+          >
+            @if(this.isLoading){
+            <span nz-icon nzType="loading" nzTheme="outline" class="text-white"></span>
+            }
+            @else{
+              <div class="text-white">Iniciar sesión</div>
+            }
+          </button>
+          @if(loginForm.invalid){
+            <div class="text-red-500 text-sm text-center mt-2">Por favor, completa los campos Email y Contraseña</div>
+          }
+        </div>
+
+        <div class="text-sm text-center">
+          <a class="text-indigo-600 hover:text-indigo-500" routerLink="/forgot-password">¿Olvidaste tu contraseña?</a>
+        </div>
+
+        <div class="text-sm text-center">
+          <a
+          class="text-indigo-600 hover:text-indigo-500"
+          routerLink="/register"
+          >¿No tienes una cuenta? Regístrate</a>
+        </div>
+      </form>
+    </div>
+  </div>
