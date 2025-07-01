@@ -19,7 +19,7 @@ import org.springframework.web.bind.annotation.RestController;
 import java.util.List;
 
 @RestController
-@CrossOrigin(origins = "*", allowCredentials = "true", allowedHeaders = "*", exposedHeaders = "If-Match")
+@CrossOrigin(origins = "*", allowedHeaders = "*")
 @AllArgsConstructor
 @RequestMapping("/ticket")
 public class TicketController {
