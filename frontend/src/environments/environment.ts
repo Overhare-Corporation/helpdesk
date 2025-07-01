@@ -1,7 +1,7 @@
 const base = "https://helpdesk-487020696834.europe-west1.run.app";
 export const environment = {
   production: true,
-  domain: base + "/",
+  domain: base,
   updateFcmToken: `${base}/updateFcmToken`,
   firebaseLoginUrl: "https://identitytoolkit.googleapis.com/v1/accounts:signInWithPassword?key=AIzaSyASZRAJtT4HxibKo8UCAxXRsJQLGyfuhhs",
   firebase: {

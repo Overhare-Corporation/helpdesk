@@ -68,7 +68,6 @@ import { UserService } from '../../services/user.service';
               <lucide-angular [img]="Trophy" class="my-icon"></lucide-angular>
               <span>Logros</span>
             </a> -->
-            <span class="text-xl font-bold text-gray-800">Panel de Control</span>
           </div>
           <nz-button-group>
             <button
