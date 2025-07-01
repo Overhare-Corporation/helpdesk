@@ -10,7 +10,7 @@ export const bearerInterceptor : HttpInterceptorFn = (req, next) => {
   const token = authService.getToken();
   if (token) {
     const authReq = req.clone({
-      setHeaders: { Authorization: `Bearer ${token}` }
+      setHeaders: { Authorization: `Bearer ${token}`, 'Accept-Language': 'es-ES', 'Allow-Access-Control-Request-Method': 'GET, POST, PUT, DELETE, OPTIONS', 'Access-Control-Allow-Origin': '*'}
     });
     return next(authReq);
   }
