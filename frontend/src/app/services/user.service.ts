@@ -5,12 +5,44 @@ import { catchError } from 'rxjs/operators';
 import { LoginResponse } from '../models/login_response';
 import { environment } from '../../environments/environment';
 
+interface CreateTicketRequest {
+  openedById: number;
+  ownTicket: string;
+  providerTicket: string;
+  assignedToId: number;
+  requiredBy: string;
+  ownStatusId: number;
+  providerStatusId: number;
+}
+
+interface TicketStatus {
+  id: number;
+  uuid: string;
+  name: string;
+  description: string;
+  color: string;
+  order: number;
+  isActive: boolean;
+  createdBy: string;
+  updatedBy: string | null;
+  deactivatedBy: string | null;
+  createdAt: string;
+  updatedAt: string | null;
+  deactivatedAt: string | null;
+}
+
+interface ApiResponse<T> {
+  message: string;
+  data: T;
+}
+
 @Injectable({
   providedIn: 'root',
 })
 export class UserService {
   constructor(private http: HttpClient) {}
 
+  private apiUrl = environment.domain;
   /**
    * Realiza la solicitud de login con email, password y un token opcional.
    * @param email Correo del usuario
@@ -33,19 +65,45 @@ export class UserService {
       );
   }
 
-    getUsers(): Observable<any> {
-    return this.http.get(`${environment.domain}user/all`);
+  getUsers(): Observable<ApiResponse<any[]>> {
+    return this.http.get<ApiResponse<any[]>>(`${this.apiUrl}/user/all`);
   }
 
-  getTickets(page: number, size: number): Observable<any> {
-    return this.http.get(`${environment.domain}ticket/all?page=${page}&size=${size}`);
+  getTickets(page: number, size: number): Observable<ApiResponse<any>> {
+    return this.http.get<ApiResponse<any>>(
+      `${this.apiUrl}/ticket/all?page=${page}&size=${size}`
+    );
   }
 
-  getTicketStatuses(): Observable<any> {
-    return this.http.get(`${environment.domain}ticket/statuses`);
+  // Nuevos métodos para POST
+  createTicket(ticketData: CreateTicketRequest): Observable<ApiResponse<any>> {
+    return this.http.post<ApiResponse<any>>(
+      `${this.apiUrl}/ticket/create`,
+      ticketData
+    );
   }
 
-  createTicket(ticketData: any): Observable<any> {
-    return this.http.post(`${environment.domain}ticket/create`, ticketData);
+  getTicketStatuses(): Observable<ApiResponse<TicketStatus[]>> {
+    return this.http.get<ApiResponse<TicketStatus[]>>(
+      `${this.apiUrl}/ticket/statuses`
+    );
+  }
+
+  // Método adicional para actualizar tickets (si lo necesitas)
+  updateTicket(
+    ticketId: string,
+    ticketData: Partial<CreateTicketRequest>
+  ): Observable<ApiResponse<any>> {
+    return this.http.put<ApiResponse<any>>(
+      `${this.apiUrl}/ticket/${ticketId}`,
+      ticketData
+    );
+  }
+
+  // Método para eliminar tickets (si lo necesitas)
+  deleteTicket(ticketId: string): Observable<ApiResponse<any>> {
+    return this.http.delete<ApiResponse<any>>(
+      `${this.apiUrl}/ticket/${ticketId}`
+    );
   }
 }
