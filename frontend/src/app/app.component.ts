@@ -14,7 +14,7 @@ import { NotificationService } from './services/notification.service';
 })
 export class AppComponent implements OnInit {
 
-  title = 'Helpdesk by Overhare';
+  title = 'Helpdesk';
 
   constructor(private notificationService: NotificationService) {}
 

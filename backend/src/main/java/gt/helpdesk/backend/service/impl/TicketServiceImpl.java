@@ -9,12 +9,15 @@ import gt.helpdesk.backend.repository.StatusEntityRepository;
 import gt.helpdesk.backend.repository.TicketEntityRepository;
 import gt.helpdesk.backend.repository.UserEntityRepository;
 import gt.helpdesk.backend.service.TicketService;
+import jakarta.transaction.Transactional;
 import lombok.AllArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
+import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
+import java.util.UUID;
 
 @Service
 @AllArgsConstructor
@@ -27,16 +30,7 @@ public class TicketServiceImpl implements TicketService {
     @Override
     public Page<TicketDto> getAllTickets(int page, int size) {
         try {
-            return ticketEntityRepository.findAll(PageRequest.of(page, size))
-                    .map(ticket -> new TicketDto(
-                            ticket.getOpenedBy().getName(),
-                            ticket.getOwnTicket(),
-                            ticket.getProviderTicket(),
-                            ticket.getAssignedTo().getName(),
-                            ticket.getRequiredBy(),
-                            new StatusDto(ticket.getOwnStatus()),
-                            new StatusDto(ticket.getProviderStatus())
-                    ));
+            return ticketEntityRepository.findAllByIsActive(PageRequest.of(page, size));
         } catch (Exception e) {
             throw new RuntimeException("Error retrieving tickets: " + e.getMessage());
         }
@@ -45,10 +39,10 @@ public class TicketServiceImpl implements TicketService {
     @Override
     public TicketDto createTicket(TicketRecord ticketRecord) {
         try {
-            final Integer ownStatusId = ticketRecord.ownStatusId();
-            final Integer providerStatusId = ticketRecord.providerStatusId();
-            final Integer assignedToId = ticketRecord.assignedToId();
-            final Integer openedById = ticketRecord.openedById();
+            final Integer ownStatusId = statusEntityRepository.findIdByUuid(UUID.fromString(ticketRecord.ownStatusId()));
+            final Integer providerStatusId = statusEntityRepository.findIdByUuid(UUID.fromString(ticketRecord.providerStatusId()));
+            final Integer assignedToId = userEntityRepository.findIdByUuid(UUID.fromString(ticketRecord.assignedToId()));
+            final Integer openedById = userEntityRepository.findIdByUuid(UUID.fromString(ticketRecord.openedById()));
             var ownStatus = statusEntityRepository.findById(ownStatusId)
                     .orElseThrow(() -> new RuntimeException("Own status not found"));
             var providerStatus = statusEntityRepository.findById(providerStatusId)
@@ -67,6 +61,7 @@ public class TicketServiceImpl implements TicketService {
                     providerStatus
             ));
             return new TicketDto(
+                    ticket.getUuid(),
                     ticket.getOpenedBy().getName(),
                     ticket.getOwnTicket(),
                     ticket.getProviderTicket(),
@@ -86,6 +81,61 @@ public class TicketServiceImpl implements TicketService {
             return statusEntityRepository.getAll();
         } catch (Exception e) {
             throw new RuntimeException("Error retrieving statuses: " + e.getMessage());
+        }
+    }
+
+    @Override
+    public TicketDto updateTicket(TicketRecord ticketRecord, UUID uuid) {
+        try {
+            final TicketEntity existingTicket = ticketEntityRepository.findByUuid(uuid)
+                    .orElseThrow(() -> new RuntimeException("Ticket not found"));
+
+            if (ticketRecord.ownStatusId() != null) {
+                existingTicket.setOwnStatus(statusEntityRepository.findByUuid(UUID.fromString(ticketRecord.ownStatusId()))
+                        .orElseThrow(() -> new RuntimeException("Own status not found")));
+            }
+            if (ticketRecord.providerStatusId() != null) {
+                existingTicket.setProviderStatus(statusEntityRepository.findByUuid(UUID.fromString(ticketRecord.providerStatusId()))
+                        .orElseThrow(() -> new RuntimeException("Provider status not found")));
+            }
+            if (ticketRecord.assignedToId() != null) {
+                existingTicket.setAssignedTo(userEntityRepository.findByUuid(UUID.fromString(ticketRecord.assignedToId()))
+                        .orElseThrow(() -> new RuntimeException("Assigned user not found")));
+            }
+            if (ticketRecord.openedById() != null) {
+                existingTicket.setOpenedBy(userEntityRepository.findByUuid(UUID.fromString(ticketRecord.openedById()))
+                        .orElseThrow(() -> new RuntimeException("Opened by user not found")));
+            }
+            existingTicket.setOwnTicket(ticketRecord.ownTicket());
+            existingTicket.setProviderTicket(ticketRecord.providerTicket());
+            existingTicket.setRequiredBy(ticketRecord.requiredBy());
+            TicketEntity updatedTicket = ticketEntityRepository.save(existingTicket);
+            return new TicketDto(
+                    updatedTicket.getUuid(),
+                    updatedTicket.getOpenedBy().getName(),
+                    updatedTicket.getOwnTicket(),
+                    updatedTicket.getProviderTicket(),
+                    updatedTicket.getAssignedTo().getName(),
+                    updatedTicket.getRequiredBy(),
+                    new StatusDto(updatedTicket.getOwnStatus()),
+                    new StatusDto(updatedTicket.getProviderStatus())
+            );
+        } catch (Exception e) {
+            throw new RuntimeException("Error updating ticket: " + e.getMessage());
+        }
+    }
+
+    @Override
+    @Transactional
+    @Modifying
+    public void deleteTicket(UUID uuid) {
+        try {
+            if (ticketEntityRepository.entityExist(uuid) == null) {
+                throw new RuntimeException("Ticket not found");
+            }
+            ticketEntityRepository.logicDelete(uuid);
+        } catch (Exception e) {
+            throw new RuntimeException("Error deleting ticket: " + e.getMessage());
         }
     }
 }

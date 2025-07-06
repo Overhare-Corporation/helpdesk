@@ -1,4 +1,4 @@
-const base = 'https://helpdesk-487020696834.europe-west1.run.app';
+const base = 'http://localhost:8080';
 export const environment = {
   production: false,
   domain: base,

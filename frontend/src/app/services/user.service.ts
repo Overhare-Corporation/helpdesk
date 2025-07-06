@@ -4,37 +4,11 @@ import { Observable, throwError } from 'rxjs';
 import { catchError } from 'rxjs/operators';
 import { LoginResponse } from '../models/login_response';
 import { environment } from '../../environments/environment';
-
-interface CreateTicketRequest {
-  openedById: number;
-  ownTicket: string;
-  providerTicket: string;
-  assignedToId: number;
-  requiredBy: string;
-  ownStatusId: number;
-  providerStatusId: number;
-}
-
-interface TicketStatus {
-  id: number;
-  uuid: string;
-  name: string;
-  description: string;
-  color: string;
-  order: number;
-  isActive: boolean;
-  createdBy: string;
-  updatedBy: string | null;
-  deactivatedBy: string | null;
-  createdAt: string;
-  updatedAt: string | null;
-  deactivatedAt: string | null;
-}
-
-interface ApiResponse<T> {
-  message: string;
-  data: T;
-}
+import {
+  ApiResponse,
+  CreateTicketRequest,
+  TicketStatus,
+} from '../models/dashboard';
 
 @Injectable({
   providedIn: 'root',
@@ -91,19 +65,27 @@ export class UserService {
 
   // Método adicional para actualizar tickets (si lo necesitas)
   updateTicket(
-    ticketId: string,
+    ticketUuid: string,
     ticketData: Partial<CreateTicketRequest>
   ): Observable<ApiResponse<any>> {
     return this.http.put<ApiResponse<any>>(
-      `${this.apiUrl}/ticket/${ticketId}`,
+      `${this.apiUrl}/ticket/${ticketUuid}`,
       ticketData
     );
   }
 
   // Método para eliminar tickets (si lo necesitas)
-  deleteTicket(ticketId: string): Observable<ApiResponse<any>> {
+  deleteTicket(ticketUuid: string): Observable<ApiResponse<any>> {
     return this.http.delete<ApiResponse<any>>(
-      `${this.apiUrl}/ticket/${ticketId}`
+      `${this.apiUrl}/ticket/${ticketUuid}`
+    );
+  }
+
+  // Método para actualizar usuario
+  updateUser(userUuid: string, userData: any): Observable<ApiResponse<any>> {
+    return this.http.put<ApiResponse<any>>(
+      `${this.apiUrl}/user/${userUuid}`,
+      userData
     );
   }
 }

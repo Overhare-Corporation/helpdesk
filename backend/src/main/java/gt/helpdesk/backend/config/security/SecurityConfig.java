@@ -16,10 +16,13 @@ import org.springframework.security.config.annotation.method.configuration.Enabl
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
 import org.springframework.security.config.annotation.web.configurers.AbstractHttpConfigurer;
+import org.springframework.security.config.annotation.web.configurers.HeadersConfigurer;
 import org.springframework.security.oauth2.jwt.Jwt;
 import org.springframework.security.web.SecurityFilterChain;
+import org.springframework.web.cors.CorsConfiguration;
 
 import java.util.ArrayList;
+import java.util.List;
 
 @Configuration
 @EnableWebSecurity
@@ -39,7 +42,25 @@ public class SecurityConfig {
                                 .requestMatchers(HttpMethod.GET, "/.well-known/*").permitAll()
                                 .anyRequest().authenticated()
                 );
-
+        http.csrf(AbstractHttpConfigurer::disable);
+        http.headers(headers -> headers
+                .frameOptions(HeadersConfigurer.FrameOptionsConfig::sameOrigin)
+        );
+        http.cors(cors -> cors.configurationSource(request -> {
+            CorsConfiguration configuration = new CorsConfiguration();
+            configuration.setAllowedOrigins(List.of("https://*.overhare.com", "http://localhost:4200"));
+            configuration.setAllowedMethods(List.of(
+                    "GET", "POST", "PUT", "DELETE", "PATCH", "OPTIONS"
+            ));
+            configuration.setAllowedHeaders(List.of(
+                    "Authorization", "Content-Type", "Accept"
+            ));
+            configuration.setExposedHeaders(List.of(
+                    "Authorization", "Content-Type", "Accept"
+            ));
+            configuration.setMaxAge(3600L);
+            return configuration;
+        }));
         return http.build();
     }
 

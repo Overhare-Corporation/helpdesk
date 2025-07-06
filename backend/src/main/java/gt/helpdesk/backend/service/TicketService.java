@@ -7,6 +7,7 @@ import org.springframework.data.domain.Page;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
+import java.util.UUID;
 
 @Service
 public interface TicketService {
@@ -15,4 +16,8 @@ public interface TicketService {
     TicketDto createTicket(TicketRecord ticketRecord);
 
     List<StatusEntity> getAllStatuses();
+
+    TicketDto updateTicket(TicketRecord ticketRecord, UUID uuid);
+
+    void deleteTicket(UUID uuid);
 }

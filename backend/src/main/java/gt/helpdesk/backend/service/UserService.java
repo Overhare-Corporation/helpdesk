@@ -10,6 +10,7 @@ import org.springframework.stereotype.Service;
 
 import java.util.List;
 import java.util.Optional;
+import java.util.UUID;
 
 @Service
 public interface UserService {
@@ -19,9 +20,9 @@ public interface UserService {
 
     Optional<UserEntity> findByEmail(String email);
 
-    ResponseModel<UserDto> getUserInfo(Integer userId);
+    ResponseModel<UserDto> getUserInfo(UUID uuid);
 
-    ResponseModel<UserDto> updateUserInfo(Integer userId, UserRecord userRecord);
+    ResponseModel<UserDto> updateUserInfo(UUID uuid, UserRecord userRecord);
 
     List<UserDto> getAllUsers();
 

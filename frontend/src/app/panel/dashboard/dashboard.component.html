@@ -1,155 +1,240 @@
 <app-navbar></app-navbar>
 
 <div class="container mt-4 mb-4 d-flex flex align-items-center ml-3">
-  <!-- Create Ticket Button -->
+  <!-- Botón Crear Ticket -->
   <button nz-button nzType="primary" (click)="showModal()" class="p-4 mb-4 d-flex align-items-center">
     <i nz-icon nzType="plus"></i>
-    Create New Ticket
+    Crear Nuevo Ticket
   </button>
 </div>
 
-<!-- Users Table -->
-<nz-table #basicTable [nzData]="users" [nzBordered]="true" [nzLoading]="isLoadingUsers">
-  <thead>
-    <tr>
-      <th nzWidth="20%">ID</th>
-      <th nzWidth="30%">Email</th>
-      <th nzWidth="25%">Username</th>
-      <th nzWidth="25%">Roles</th>
-    </tr>
-  </thead>
-  <tbody>
-    <tr *ngFor="let user of users">
-      <td>{{ user.id }}</td>
-      <td>{{ user.email }}</td>
-      <td>{{ user.username }}</td>
-      <td>{{ user.roles.join(', ') }}</td>
-    </tr>
-    <tr *ngIf="!users.length">
-      <td colspan="4" class="text-center">No users available</td>
-    </tr>
-  </tbody>
-</nz-table>
+<div class="flex-column align-items-center justify-center flex">
+  <div class="container mb-2">
+    <!-- Tabla de Usuarios -->
+    <nz-table #basicTable [nzData]="users" [nzBordered]="true" [nzLoading]="isLoadingUsers">
+      <thead>
+        <tr>
+          <th nzWidth="25%">Correo Electrónico</th>
+          <th nzWidth="20%">Nombre de Usuario</th>
+          <th nzWidth="15%">Nombre</th>
+          <th nzWidth="15%">Roles</th>
+          <th nzWidth="10%">Acciones</th>
+        </tr>
+      </thead>
+      <tbody>
+        @for (user of users; track user.uuid) {
+        <tr>
+          <td>{{ user.email }}</td>
+          <td>{{ user.username }}</td>
+          <td>{{ user.name || 'N/A' }}</td>
+          <td>
+            @for (role of user.roles; track $index) {
+            <span class="badge badge-primary me-1">{{ role }}</span>
+            }
+          </td>
+          <td>
+            <button nz-button nzType="link" nzSize="small" (click)="editUser(user)" [nzLoading]="isUpdatingUser">
+              <i nz-icon nzType="edit"></i>
+              Editar
+            </button>
+          </td>
+        </tr>
+        }
+      </tbody>
+    </nz-table>
 
-<!-- Tickets Table -->
-<nz-table #ticketTable [nzData]="tickets" [nzBordered]="true" [nzLoading]="isLoadingTickets">
-  <thead>
-    <tr>
-      <th nzWidth="15%">Own Ticket</th>
-      <th nzWidth="15%">Provider Ticket</th>
-      <th nzWidth="20%">Opened By</th>
-      <th nzWidth="20%">Assigned To</th>
-      <th nzWidth="15%">Required By</th>
-      <th nzWidth="15%">Status</th>
-    </tr>
-  </thead>
-  <tbody>
-    <tr *ngFor="let ticket of tickets">
-      <td>{{ ticket.ownTicket }}</td>
-      <td>{{ ticket.providerTicket }}</td>
-      <td>{{ ticket.openedBy }}</td>
-      <td>{{ ticket.assignedTo }}</td>
-      <td>{{ ticket.requiredBy }}</td>
-      <td>
-        <span [style.color]="ticket.ownStatus.color">{{ ticket.ownStatus.name }}</span>
-      </td>
-    </tr>
-    <tr *ngIf="!tickets.length">
-      <td colspan="6" class="text-center">No tickets available</td>
-    </tr>
-  </tbody>
-</nz-table>
-<nz-modal [(nzVisible)]="isVisible" nzTitle="The first Modal" (nzOnCancel)="handleCancel()" (nzOnOk)="handleOk()">
-  <form nz-form [formGroup]="ticketForm" (ngSubmit)="onSubmitTicket()" [nzLayout]="'vertical'">
+    <!-- Tabla de Tickets -->
+    <nz-table #ticketTable [nzData]="tickets" [nzBordered]="true" [nzLoading]="isLoadingTickets">
+      <thead>
+        <tr>
+          <th nzWidth="15%">Ticket Propio</th>
+          <th nzWidth="15%">Ticket Proveedor</th>
+          <th nzWidth="15%">Abierto Por</th>
+          <th nzWidth="15%">Asignado A</th>
+          <th nzWidth="15%">Requerido Por</th>
+          <th nzWidth="10%">Estados</th>
+          <th nzWidth="10%">Acciones</th>
+        </tr>
+      </thead>
+      <tbody>
+        @for (ticket of tickets; track ticket.uuid) {
+        <tr>
+          <td>{{ ticket.ownTicket }}</td>
+          <td>{{ ticket.providerTicket }}</td>
+          <td>{{ ticket.openedBy }}</td>
+          <td>{{ ticket.assignedTo }}</td>
+          <td>{{ ticket.requiredBy }}</td>
+          <td>
+            <div>
+              <span [style.color]="ticket.ownStatus.color">{{ ticket.ownStatus.name }}</span>
+            </div>
+            <div>
+              <span [style.color]="ticket.providerStatus.color">{{ ticket.providerStatus.name }}</span>
+            </div>
+          </td>
+          <td>
+            <button nz-button nzType="link" nzSize="small" (click)="editTicket(ticket)" [nzLoading]="isLoadingStatuses"
+              class="me-2">
+              <i nz-icon nzType="edit"></i>
+              Editar
+            </button>
+            <button nz-button nzType="link" nzSize="small" nzDanger nz-popconfirm
+              nzPopconfirmTitle="¿Está seguro de eliminar este ticket?" nzPopconfirmPlacement="top"
+              (nzOnConfirm)="deleteTicket(ticket.uuid)">
+              @if(isDeletingTicket && ticket.uuid === currentTicketId) {
+              <i nz-icon nzType="loading"></i>
+              }
+              @else {
+              <i nz-icon nzType="delete"></i>
+              Eliminar
+              }
+            </button>
+          </td>
+        </tr>
+        }
+      </tbody>
+    </nz-table>
 
-    <!-- Own Ticket ID -->
-    <nz-form-item>
-      <nz-form-label [nzRequired]="true">Own Ticket ID</nz-form-label>
-      <nz-form-control nzErrorTip="Please enter the own ticket ID">
-        <input nz-input formControlName="ownTicket" placeholder="e.g., R-19123"
-          [class.error]="isFieldInvalid('ownTicket')" />
-      </nz-form-control>
-    </nz-form-item>
+    <!-- Modal para Crear/Editar Ticket -->
+    <nz-modal [(nzVisible)]="isVisible" [nzTitle]="modalTitle" (nzOnCancel)="handleCancel()" (nzOnOk)="handleOk()"
+      [nzOkText]="submitButtonText" [nzOkLoading]="isSubmitting" [nzCancelText]="'Cancelar'" nzWidth="600px">
+      <ng-container *nzModalContent>
+        <form nz-form [formGroup]="ticketForm" (ngSubmit)="onSubmitTicket()" [nzLayout]="'vertical'">
 
-    <!-- Provider Ticket ID -->
-    <nz-form-item>
-      <nz-form-label [nzRequired]="true">Provider Ticket ID</nz-form-label>
-      <nz-form-control nzErrorTip="Please enter the provider ticket ID">
-        <input nz-input formControlName="providerTicket" placeholder="e.g., I-00123"
-          [class.error]="isFieldInvalid('providerTicket')" />
-      </nz-form-control>
-    </nz-form-item>
+          <!-- ID Ticket Propio -->
+          <nz-form-item>
+            <nz-form-label [nzRequired]="true">ID Ticket Propio</nz-form-label>
+            <nz-form-control nzErrorTip="Por favor ingrese el ID del ticket propio">
+              <input nz-input formControlName="ownTicket" placeholder="ej., R-19123"
+                [class.error]="isFieldInvalid('ownTicket')" />
+            </nz-form-control>
+          </nz-form-item>
 
-    <!-- Required By -->
-    <nz-form-item>
-      <nz-form-label [nzRequired]="true">Required By</nz-form-label>
-      <nz-form-control nzErrorTip="Please enter who requires this ticket">
-        <input nz-input formControlName="requiredBy" placeholder="e.g., Juan"
-          [class.error]="isFieldInvalid('requiredBy')" />
-      </nz-form-control>
-    </nz-form-item>
+          <!-- ID Ticket Proveedor -->
+          <nz-form-item>
+            <nz-form-label [nzRequired]="true">ID Ticket Proveedor</nz-form-label>
+            <nz-form-control nzErrorTip="Por favor ingrese el ID del ticket del proveedor">
+              <input nz-input formControlName="providerTicket" placeholder="ej., I-00123"
+                [class.error]="isFieldInvalid('providerTicket')" />
+            </nz-form-control>
+          </nz-form-item>
 
-    <!-- Opened By -->
-    <nz-form-item>
-      <nz-form-label [nzRequired]="true">Opened By</nz-form-label>
-      <nz-form-control nzErrorTip="Please select who opened this ticket">
-        <nz-select formControlName="openedById" nzPlaceHolder="Select user" [nzLoading]="isLoadingUsers"
-          [class.error]="isFieldInvalid('openedById')">
-          <nz-option *ngFor="let user of users" [nzValue]="user.id" [nzLabel]="user.email"></nz-option>
-        </nz-select>
-      </nz-form-control>
-    </nz-form-item>
+          <!-- Requerido Por -->
+          <nz-form-item>
+            <nz-form-label [nzRequired]="true">Requerido Por</nz-form-label>
+            <nz-form-control nzErrorTip="Por favor ingrese quién requiere este ticket">
+              <input nz-input formControlName="requiredBy" placeholder="ej., Juan"
+                [class.error]="isFieldInvalid('requiredBy')" />
+            </nz-form-control>
+          </nz-form-item>
 
-    <!-- Assigned To -->
-    <nz-form-item>
-      <nz-form-label [nzRequired]="true">Assigned To</nz-form-label>
-      <nz-form-control nzErrorTip="Please select who this ticket is assigned to">
-        <nz-select formControlName="assignedToId" nzPlaceHolder="Select user" [nzLoading]="isLoadingUsers"
-          [class.error]="isFieldInvalid('assignedToId')">
-          <nz-option *ngFor="let user of users" [nzValue]="user.id" [nzLabel]="user.email"></nz-option>
-        </nz-select>
-      </nz-form-control>
-    </nz-form-item>
+          <!-- Abierto Por -->
+          <nz-form-item>
+            <nz-form-label [nzRequired]="true">Abierto Por</nz-form-label>
+            <nz-form-control nzErrorTip="Por favor seleccione quién abrió este ticket">
+              <nz-select formControlName="openedById" nzPlaceHolder="Seleccionar usuario" [nzLoading]="isLoadingUsers"
+                [class.error]="isFieldInvalid('openedById')">
+                @for (user of users; track user.uuid) {
+                <nz-option [nzValue]="user.uuid" [nzLabel]="user.email"></nz-option>
+                }
+              </nz-select>
+            </nz-form-control>
+          </nz-form-item>
 
-    <!-- Own Status -->
-    <nz-form-item>
-      <nz-form-label [nzRequired]="true">Own Status</nz-form-label>
-      <nz-form-control nzErrorTip="Please select the own status">
-        <nz-select formControlName="ownStatusId" nzPlaceHolder="Select status" [nzLoading]="isLoadingStatuses"
-          [class.error]="isFieldInvalid('ownStatusId')">
-          <nz-option *ngFor="let status of ticketStatuses" [nzValue]="status.id">
-            <span [style.color]="status.color">{{ status.name }}</span>
-            <small style="margin-left: 8px; color: #666;">{{ status.description }}</small>
-          </nz-option>
-        </nz-select>
-      </nz-form-control>
-    </nz-form-item>
+          <!-- Asignado A -->
+          <nz-form-item>
+            <nz-form-label [nzRequired]="true">Asignado A</nz-form-label>
+            <nz-form-control nzErrorTip="Por favor seleccione a quién está asignado este ticket">
+              <nz-select formControlName="assignedToId" nzPlaceHolder="Seleccionar usuario" [nzLoading]="isLoadingUsers"
+                [class.error]="isFieldInvalid('assignedToId')">
+                @for (user of users; track user.uuid) {
+                <nz-option [nzValue]="user.uuid" [nzLabel]="user.email"></nz-option>
+                }
+              </nz-select>
+            </nz-form-control>
+          </nz-form-item>
 
-    <!-- Provider Status -->
-    <nz-form-item>
-      <nz-form-label [nzRequired]="true">Provider Status</nz-form-label>
-      <nz-form-control nzErrorTip="Please select the provider status">
-        <nz-select formControlName="providerStatusId" nzPlaceHolder="Select status" [nzLoading]="isLoadingStatuses"
-          [class.error]="isFieldInvalid('providerStatusId')">
-          <nz-option *ngFor="let status of ticketStatuses" [nzValue]="status.id">
-            <span [style.color]="status.color">{{ status.name }}</span>
-            <small style="margin-left: 8px; color: #666;">{{ status.description }}</small>
-          </nz-option>
-        </nz-select>
-      </nz-form-control>
-    </nz-form-item>
+          <!-- Estado Propio -->
+          <nz-form-item>
+            <nz-form-label [nzRequired]="true">Estado Propio</nz-form-label>
+            <nz-form-control nzErrorTip="Por favor seleccione el estado propio">
+              <nz-select formControlName="ownStatusId" nzPlaceHolder="Seleccionar estado"
+                [nzLoading]="isLoadingStatuses" [class.error]="isFieldInvalid('ownStatusId')"
+                [nzCustomTemplate]="ownStatusTemplate">
+                @for (status of ticketStatuses; track status.uuid) {
+                <nz-option [nzValue]="status.uuid" [nzLabel]="status.name" />
+                }
+                <ng-template #ownStatusTemplate let-status>
+                  {{ status.nzValue ? status.nzLabel : 'Seleccionar un estado' }}
+                </ng-template>
+              </nz-select>
+            </nz-form-control>
+          </nz-form-item>
 
-    <!-- Submit Button -->
-    <nz-form-item>
-      <nz-form-control>
-        <button nz-button nzType="primary" [nzLoading]="isCreatingTicket" [disabled]="!ticketForm.valid" type="submit">
-          Create Ticket
-        </button>
-        <button nz-button type="button" (click)="resetForm()" style="margin-left: 8px;" [disabled]="isCreatingTicket">
-          Reset
-        </button>
-      </nz-form-control>
-    </nz-form-item>
+          <!-- Estado Proveedor -->
+          <nz-form-item>
+            <nz-form-label [nzRequired]="true">Estado Proveedor</nz-form-label>
+            <nz-form-control nzErrorTip="Por favor seleccione el estado del proveedor">
+              <nz-select formControlName="providerStatusId" nzPlaceHolder="Seleccionar estado"
+                [nzLoading]="isLoadingStatuses" [class.error]="isFieldInvalid('providerStatusId')"
+                [nzCustomTemplate]="providerStatusTemplate">
+                @for (status of ticketStatuses; track status.uuid) {
+                <nz-option [nzValue]="status.uuid" [nzLabel]="status.name" />
+                }
+                <ng-template #providerStatusTemplate let-selected>
+                  {{ selected.nzValue ? selected.nzLabel : 'Seleccionar un estado' }}
+                </ng-template>
+              </nz-select>
+            </nz-form-control>
+          </nz-form-item>
 
-  </form>
-</nz-modal>
+          <!-- Botones del formulario (solo se muestran si no se usan los del modal) -->
+          <nz-form-item style="display: none;">
+            <nz-form-control>
+              <button nz-button nzType="primary" [nzLoading]="isSubmitting" [disabled]="!ticketForm.valid"
+                type="submit">
+                {{ submitButtonText }}
+              </button>
+              <button nz-button type="button" (click)="resetForm()" style="margin-left: 8px;" [disabled]="isSubmitting">
+                Reiniciar
+              </button>
+            </nz-form-control>
+          </nz-form-item>
+        </form>
+      </ng-container>
+    </nz-modal>
+
+    <!-- Modal para Editar Usuario -->
+    <nz-modal [(nzVisible)]="isUserModalVisible" [nzTitle]="userModalTitle" (nzOnCancel)="handleUserCancel()"
+      (nzOnOk)="handleUserOk()" [nzOkText]="userSubmitButtonText" [nzOkLoading]="isUpdatingUser"
+      [nzCancelText]="'Cancelar'" nzWidth="600px">
+      <ng-container *nzModalContent>
+        <form nz-form [formGroup]="userForm" (ngSubmit)="onSubmitUser()" [nzLayout]="'vertical'">
+          <!-- Name -->
+          <nz-form-item>
+            <nz-form-label [nzRequired]="true">Nombre Completo</nz-form-label>
+            <nz-form-control nzErrorTip="Por favor ingrese el nombre completo (mínimo 2 caracteres)">
+              <input nz-input formControlName="name" placeholder="Juan Pérez"
+                [class.error]="isUserFieldInvalid('name')" />
+            </nz-form-control>
+          </nz-form-item>
+
+          <!-- Botones del formulario (solo se muestran si no se usan los del modal) -->
+          <nz-form-item style="display: none;">
+            <nz-form-control>
+              <button nz-button nzType="primary" [nzLoading]="isUpdatingUser" [disabled]="!userForm.valid"
+                type="submit">
+                {{ userSubmitButtonText }}
+              </button>
+              <button nz-button type="button" (click)="resetUserForm()" style="margin-left: 8px;"
+                [disabled]="isUpdatingUser">
+                Reiniciar
+              </button>
+            </nz-form-control>
+          </nz-form-item>
+        </form>
+      </ng-container>
+    </nz-modal>
+
+  </div>
+</div>

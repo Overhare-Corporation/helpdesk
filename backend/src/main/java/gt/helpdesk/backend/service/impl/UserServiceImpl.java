@@ -15,6 +15,7 @@ import org.springframework.stereotype.Service;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
+import java.util.UUID;
 
 @Service
 @AllArgsConstructor
@@ -40,11 +41,11 @@ public class UserServiceImpl implements UserService {
     }
 
     @Override
-    public ResponseModel<UserDto> getUserInfo(Integer userId) {
+    public ResponseModel<UserDto> getUserInfo(UUID uuid) {
         try {
             return ResponseModel.<UserDto>builder()
                     .message("User information retrieved successfully")
-                    .data(userEntityRepository.findByIdDto(userId))
+                    .data(userEntityRepository.findByUuidDto(uuid))
                     .build();
         } catch (Exception e) {
             return ResponseModel.<UserDto>builder()
@@ -55,9 +56,9 @@ public class UserServiceImpl implements UserService {
     }
 
     @Override
-    public ResponseModel<UserDto> updateUserInfo(Integer userId, UserRecord userRecord) {
+    public ResponseModel<UserDto> updateUserInfo(UUID uuid, UserRecord userRecord) {
         try {
-            UserEntity userEntity = userEntityRepository.findById(userId)
+            UserEntity userEntity = userEntityRepository.findByUuid(uuid)
                     .orElseThrow(() -> new RuntimeException("User not found"));
             
             userEntity.setName(userRecord.name());

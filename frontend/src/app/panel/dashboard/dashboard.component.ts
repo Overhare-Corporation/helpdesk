@@ -17,65 +17,17 @@ import { CommonModule } from '@angular/common';
 import { NzModalModule } from 'ng-zorro-antd/modal';
 import { NzMessageService } from 'ng-zorro-antd/message';
 import { NzIconModule } from 'ng-zorro-antd/icon';
-
-interface User {
-  id: number;
-  email: string;
-  username: string;
-  name: string | null;
-  roles: string[];
-}
-
-interface TicketStatus {
-  id: number;
-  uuid: string;
-  name: string;
-  description: string;
-  color: string;
-  order: number;
-  isActive: boolean;
-  createdBy: string;
-  updatedBy: string | null;
-  deactivatedBy: string | null;
-  createdAt: string;
-  updatedAt: string | null;
-  deactivatedAt: string | null;
-}
-
-interface Ticket {
-  openedBy: string;
-  ownTicket: string;
-  providerTicket: string;
-  assignedTo: string;
-  requiredBy: string;
-  ownStatus: TicketStatus;
-  providerStatus: TicketStatus;
-}
-
-interface CreateTicketRequest {
-  openedById: number;
-  ownTicket: string;
-  providerTicket: string;
-  assignedToId: number;
-  requiredBy: string;
-  ownStatusId: number;
-  providerStatusId: number;
-}
-
-interface ApiResponse<T> {
-  message: string;
-  data: T;
-}
-
-interface PaginatedResponse<T> {
-  content: T[];
-  page: {
-    size: number;
-    number: number;
-    totalElements: number;
-    totalPages: number;
-  };
-}
+import { NzPopconfirmModule } from 'ng-zorro-antd/popconfirm';
+import {
+  User,
+  Ticket,
+  TicketStatus,
+  CreateTicketRequest,
+  UpdateTicketRequest,
+  UpdateUserRequest,
+  ApiResponse,
+  PaginatedResponse
+} from '../../models/dashboard';
 
 @Component({
   selector: 'app-dashboard',
@@ -91,6 +43,7 @@ interface PaginatedResponse<T> {
     NzSelectModule,
     NzCardModule,
     ReactiveFormsModule,
+    NzPopconfirmModule,
   ],
   templateUrl: './dashboard.component.html',
   styleUrl: './dashboard.component.css',
@@ -100,12 +53,25 @@ export class DashboardComponent implements OnInit {
   tickets: Ticket[] = [];
   ticketStatuses: TicketStatus[] = [];
   ticketForm: FormGroup;
+  userForm: FormGroup;
+
+  // Estados de carga y visibilidad
   isVisible = false;
+  isUserModalVisible = false;
   isLoadingUsers = true;
   isLoadingTickets = true;
   isLoadingStatuses = false;
   isCreatingTicket = false;
+  isUpdatingTicket = false;
+  isUpdatingUser = false;
+  isDeletingTicket = false;
   showCreateForm = false;
+
+  // Estados de edición
+  isEditMode = false;
+  isUserEditMode = false;
+  currentTicketId: string | null = null;
+  currentUserId: string | null = null;
 
   constructor(
     private userService: UserService,
@@ -121,6 +87,10 @@ export class DashboardComponent implements OnInit {
       ownStatusId: [null, [Validators.required]],
       providerStatusId: [null, [Validators.required]],
     });
+
+    this.userForm = this.fb.group({
+      name: ['', [Validators.required, Validators.minLength(2)]],
+    });
   }
 
   ngOnInit(): void {
@@ -132,13 +102,12 @@ export class DashboardComponent implements OnInit {
     this.isLoadingUsers = true;
     this.userService.getUsers().subscribe({
       next: (response: ApiResponse<User[]>) => {
-        console.log('Users fetched successfully:', response);
         this.users = response.data;
         this.isLoadingUsers = false;
       },
       error: (error) => {
         console.error('Error fetching users:', error);
-        this.message.error('Failed to load users');
+        this.message.error('Error al cargar usuarios');
         this.isLoadingUsers = false;
       },
     });
@@ -148,20 +117,19 @@ export class DashboardComponent implements OnInit {
     this.isLoadingTickets = true;
     this.userService.getTickets(0, 10).subscribe({
       next: (response: ApiResponse<PaginatedResponse<Ticket>>) => {
-        console.log('Tickets fetched successfully:', response);
         this.tickets = response.data.content;
         this.isLoadingTickets = false;
       },
       error: (error) => {
         console.error('Error fetching tickets:', error);
-        this.message.error('Failed to load tickets');
+        this.message.error('Error al cargar tickets');
         this.isLoadingTickets = false;
       },
     });
   }
 
   private loadTicketStatuses(): void {
-    if (this.ticketStatuses.length > 0) return; // Ya están cargados
+    if (this.ticketStatuses.length > 0) return;
 
     this.isLoadingStatuses = true;
     this.userService.getTicketStatuses().subscribe({
@@ -171,7 +139,7 @@ export class DashboardComponent implements OnInit {
       },
       error: (error) => {
         console.error('Error fetching ticket statuses:', error);
-        this.message.error('Failed to load ticket statuses');
+        this.message.error('Error al cargar estados de ticket');
         this.isLoadingStatuses = false;
       },
     });
@@ -186,13 +154,29 @@ export class DashboardComponent implements OnInit {
 
   resetForm(): void {
     this.ticketForm.reset();
+    this.isEditMode = false;
+    this.currentTicketId = null;
     Object.keys(this.ticketForm.controls).forEach((key) => {
       this.ticketForm.get(key)?.setErrors(null);
     });
   }
 
+  resetUserForm(): void {
+    this.userForm.reset();
+    this.isUserEditMode = false;
+    this.currentUserId = null;
+    Object.keys(this.userForm.controls).forEach((key) => {
+      this.userForm.get(key)?.setErrors(null);
+    });
+  }
+
   isFieldInvalid(fieldName: string): boolean {
     const field = this.ticketForm.get(fieldName);
+    return !!(field && field.invalid && (field.dirty || field.touched));
+  }
+
+  isUserFieldInvalid(fieldName: string): boolean {
+    const field = this.userForm.get(fieldName);
     return !!(field && field.invalid && (field.dirty || field.touched));
   }
 
@@ -203,50 +187,229 @@ export class DashboardComponent implements OnInit {
     });
   }
 
-  // Lógica para crear el ticket
+  private markUserFormGroupTouched(): void {
+    Object.keys(this.userForm.controls).forEach((key) => {
+      const control = this.userForm.get(key);
+      control?.markAsTouched();
+    });
+  }
+
+  // ============ MÉTODOS PARA TICKETS ============
+
   onSubmitTicket(): void {
     if (this.ticketForm.valid) {
-      this.isCreatingTicket = true;
-      const formValue = this.ticketForm.value;
-      const createTicketRequest: CreateTicketRequest = {
-        openedById: formValue.openedById,
-        ownTicket: formValue.ownTicket,
-        providerTicket: formValue.providerTicket,
-        assignedToId: formValue.assignedToId,
-        requiredBy: formValue.requiredBy,
-        ownStatusId: formValue.ownStatusId,
-        providerStatusId: formValue.providerStatusId,
-      };
-
-      this.userService.createTicket(createTicketRequest).subscribe({
-        next: () => {
-          this.message.success('Ticket created successfully!');
-          this.resetForm();
-          this.loadTickets();
-          this.isCreatingTicket = false;
-        },
-        error: () => {
-          this.message.error('Failed to create ticket. Please try again.');
-          this.isCreatingTicket = false;
-        },
-      });
+      if (this.isEditMode && this.currentTicketId) {
+        this.updateTicket();
+      } else {
+        this.createTicket();
+      }
     } else {
-      this.message.warning('Please fill in all required fields correctly.');
+      this.message.warning('Por favor complete todos los campos requeridos correctamente.');
+      this.markFormGroupTouched();
     }
   }
 
+  private createTicket(): void {
+    this.isCreatingTicket = true;
+    const formValue = this.ticketForm.value;
+    const createTicketRequest: CreateTicketRequest = {
+      openedById: formValue.openedById,
+      ownTicket: formValue.ownTicket,
+      providerTicket: formValue.providerTicket,
+      assignedToId: formValue.assignedToId,
+      requiredBy: formValue.requiredBy,
+      ownStatusId: formValue.ownStatusId,
+      providerStatusId: formValue.providerStatusId,
+    };
+
+    this.userService.createTicket(createTicketRequest).subscribe({
+      next: () => {
+        this.message.success('¡Ticket creado exitosamente!');
+        this.resetForm();
+        this.loadTickets();
+        this.isCreatingTicket = false;
+        this.isVisible = false;
+      },
+      error: (error) => {
+        console.error('Error creating ticket:', error);
+        this.message.error('Error al crear el ticket. Por favor intente nuevamente.');
+        this.isCreatingTicket = false;
+      },
+    });
+  }
+
+  private updateTicket(): void {
+    if (!this.currentTicketId) return;
+
+    this.isUpdatingTicket = true;
+    const formValue = this.ticketForm.value;
+    const updateTicketRequest: UpdateTicketRequest = {
+      openedById: formValue.openedById,
+      ownTicket: formValue.ownTicket,
+      providerTicket: formValue.providerTicket,
+      assignedToId: formValue.assignedToId,
+      requiredBy: formValue.requiredBy,
+      ownStatusId: formValue.ownStatusId,
+      providerStatusId: formValue.providerStatusId,
+    };
+
+    this.userService.updateTicket(this.currentTicketId, updateTicketRequest).subscribe({
+      next: () => {
+        this.message.success('¡Ticket actualizado exitosamente!');
+        this.resetForm();
+        this.loadTickets();
+        this.isUpdatingTicket = false;
+        this.isVisible = false;
+      },
+      error: (error) => {
+        console.error('Error updating ticket:', error);
+        this.message.error('Error al actualizar el ticket. Por favor intente nuevamente.');
+        this.isUpdatingTicket = false;
+      },
+    });
+  }
+
+  deleteTicket(ticketUuid: string): void {
+    this.isDeletingTicket = true;
+    this.currentTicketId = ticketUuid;
+    this.userService.deleteTicket(ticketUuid).subscribe({
+      next: () => {
+        this.message.success('¡Ticket eliminado exitosamente!');
+        this.loadTickets();
+        this.isDeletingTicket = false;
+      },
+      error: (error) => {
+        console.error('Error deleting ticket:', error);
+        this.message.error('Error al eliminar el ticket. Por favor intente nuevamente.');
+        this.isDeletingTicket = false;
+      },
+    });
+  }
+
+  editTicket(ticket: Ticket): void {
+    this.isEditMode = true;
+    this.currentTicketId = ticket.uuid;
+    this.loadTicketStatuses();
+
+    const openedByUser = this.users.find(user => user.email === ticket.openedBy || user.username === ticket.openedBy);
+    const assignedToUser = this.users.find(user => user.email === ticket.assignedTo || user.username === ticket.assignedTo);
+
+    this.ticketForm.patchValue({
+      ownTicket: ticket.ownTicket,
+      providerTicket: ticket.providerTicket,
+      requiredBy: ticket.requiredBy,
+      openedById: openedByUser?.uuid || ticket.openedById,
+      assignedToId: assignedToUser?.uuid || ticket.assignedToId,
+      ownStatusId: ticket.ownStatus.uuid,
+      providerStatusId: ticket.providerStatus.uuid,
+    });
+
+    this.isVisible = true;
+          console.log('Form value:', this.ticketForm.value);
+          console.log('Current ticket ID:', this.currentTicketId);
+
+  }
+
+  // ============ MÉTODOS PARA USUARIOS ============
+
+  editUser(user: User): void {
+    this.isUserEditMode = true;
+    this.currentUserId = user.uuid;
+
+    this.userForm.patchValue({
+      name: user.name || ''
+    });
+
+    this.isUserModalVisible = true;
+  }
+
+  onSubmitUser(): void {
+    if (this.userForm.valid) {
+      this.updateUser();
+    } else {
+      this.message.warning('Por favor complete todos los campos requeridos correctamente.');
+      this.markUserFormGroupTouched();
+    }
+  }
+
+  private updateUser(): void {
+    if (!this.currentUserId) return;
+
+    this.isUpdatingUser = true;
+    const formValue = this.userForm.value;
+    const updateUserRequest: UpdateUserRequest = {
+      email: formValue.email,
+      username: formValue.username,
+      name: formValue.name,
+      roles: formValue.roles,
+    };
+
+    this.userService.updateUser(this.currentUserId, updateUserRequest).subscribe({
+      next: () => {
+        this.message.success('¡Usuario actualizado exitosamente!');
+        this.resetUserForm();
+        this.loadUsers();
+        this.isUpdatingUser = false;
+        this.isUserModalVisible = false;
+      },
+      error: (error) => {
+        console.error('Error updating user:', error);
+        this.message.error('Error al actualizar el usuario. Por favor intente nuevamente.');
+        this.isUpdatingUser = false;
+      },
+    });
+  }
+
+  // ============ MÉTODOS PARA MODALES ============
+
   showModal(): void {
+    this.resetForm();
     this.isVisible = true;
     this.toggleCreateForm();
   }
 
   handleOk(): void {
-    console.log('Button ok clicked!');
-    this.isVisible = false;
+          console.log('Form value:', this.ticketForm.value);
+
+    this.onSubmitTicket();
   }
 
   handleCancel(): void {
-    console.log('Button cancel clicked!');
+    this.resetForm();
     this.isVisible = false;
+  }
+
+  handleUserOk(): void {
+    this.onSubmitUser();
+  }
+
+  handleUserCancel(): void {
+    this.resetUserForm();
+    this.isUserModalVisible = false;
+  }
+
+  // ============ GETTERS ============
+
+  get submitButtonText(): string {
+    if (this.isEditMode) {
+      return this.isUpdatingTicket ? 'Actualizando...' : 'Actualizar Ticket';
+    }
+    return this.isCreatingTicket ? 'Creando...' : 'Crear Ticket';
+  }
+
+  get userSubmitButtonText(): string {
+    return this.isUpdatingUser ? 'Actualizando...' : 'Actualizar Usuario';
+  }
+
+  get isSubmitting(): boolean {
+    return this.isCreatingTicket || this.isUpdatingTicket;
+  }
+
+  get modalTitle(): string {
+    return this.isEditMode ? 'Editar Ticket' : 'Crear Nuevo Ticket';
+  }
+
+  get userModalTitle(): string {
+    return 'Editar Usuario';
   }
 }

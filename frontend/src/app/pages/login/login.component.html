@@ -1,7 +1,7 @@
 <div class="flex items-center justify-center min-h-screen bg-gray-100">
     <div class="bg-white p-8 rounded-lg shadow-md w-full max-w-md">
       <img src="https://www.adsgt.com/adsgt.svg" alt="overhare" class="mx-auto mb-6 w-20" />
-      <h2 class="text-center text-2xl font-bold mb-4">Helpdesk by Overhare</h2>
+      <h2 class="text-center text-2xl font-bold mb-4">Helpdesk</h2>
 
       <form ((submit))="onSubmit()" [formGroup]="loginForm" class="space-y-4">
         <div>
@@ -55,7 +55,7 @@
             class="w-full flex justify-center py-2 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-black hover:bg-gray-800 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500"
           >
             @if(this.isLoading){
-            <span nz-icon nzType="loading" nzTheme="outline" class="text-white"></span>
+            <span nz-icon nzType="loading" nzTheme="outline" class="text-white" style="color: white;"></span>
             }
             @else{
               <div class="text-white">Iniciar sesión</div>

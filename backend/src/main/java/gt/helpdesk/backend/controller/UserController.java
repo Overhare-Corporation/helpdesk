@@ -8,11 +8,14 @@ import lombok.AllArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.CrossOrigin;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PutMapping;
+import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 import java.util.List;
+import java.util.UUID;
 
 @RestController
 @CrossOrigin(origins = "*")
@@ -34,10 +37,11 @@ public class UserController {
         }
     }
 
-    @PutMapping("/update")
-    public ResponseEntity<ResponseModel<UserDto>> updateUserInfo(Integer userId, UserRecord userRecord) {
+    @PutMapping("/{uuidString}")
+    public ResponseEntity<ResponseModel<UserDto>> updateUserInfo(@RequestBody UserRecord userRecord, @PathVariable String uuidString) {
         try {
-            ResponseModel<UserDto> response = userService.updateUserInfo(userId, userRecord);
+            final UUID uuid = UUID.fromString(uuidString);
+            ResponseModel<UserDto> response = userService.updateUserInfo(uuid, userRecord);
             return ResponseEntity.ok(response);
         } catch (Exception e) {
             return ResponseEntity.status(500)

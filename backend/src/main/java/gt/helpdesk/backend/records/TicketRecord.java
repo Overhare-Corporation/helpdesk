@@ -1,12 +1,12 @@
 package gt.helpdesk.backend.records;
 
 public record TicketRecord (
-    Integer openedById,
+    String openedById,
     String ownTicket,
     String providerTicket,
-    Integer assignedToId,
+    String assignedToId,
     String requiredBy,
-    Integer ownStatusId,
-    Integer providerStatusId
+    String ownStatusId,
+    String providerStatusId
 ){
 }

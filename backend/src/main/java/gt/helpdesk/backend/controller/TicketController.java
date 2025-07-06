@@ -9,14 +9,18 @@ import lombok.AllArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.CrossOrigin;
+import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 import java.util.List;
+import java.util.UUID;
 
 @RestController
 @CrossOrigin(origins = "*")
@@ -49,6 +53,28 @@ public class TicketController {
         try {
             List<StatusEntity> statuses = ticketService.getAllStatuses();
             return ResponseEntity.ok(new ResponseModel<>("Statuses retrieved successfully", statuses));
+        } catch (Exception e) {
+            return ResponseEntity.status(500).body(new ResponseModel<>(e.getMessage(), null));
+        }
+    }
+
+    @PutMapping("/{uuidString}")
+    public ResponseEntity<ResponseModel<TicketDto>> updateTicket(@RequestBody TicketRecord ticketRecord, @PathVariable String uuidString) {
+        try {
+            final UUID uuid = UUID.fromString(uuidString);
+            final TicketDto updatedTicket = ticketService.updateTicket(ticketRecord, uuid);
+            return ResponseEntity.ok(new ResponseModel<>("Ticket updated successfully", updatedTicket));
+        } catch (Exception e) {
+            return ResponseEntity.status(500).body(new ResponseModel<>(e.getMessage(), null));
+        }
+    }
+
+    @DeleteMapping("/{uuidString}")
+    public ResponseEntity<ResponseModel<String>> deleteTicket(@PathVariable String uuidString) {
+        try {
+            final UUID uuid = UUID.fromString(uuidString);
+            ticketService.deleteTicket(uuid);
+            return ResponseEntity.ok(new ResponseModel<>("Ticket deleted successfully", "Ticket with ID " + uuid + " has been deleted."));
         } catch (Exception e) {
             return ResponseEntity.status(500).body(new ResponseModel<>(e.getMessage(), null));
         }
