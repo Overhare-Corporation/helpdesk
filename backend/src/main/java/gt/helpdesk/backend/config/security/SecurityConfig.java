@@ -48,7 +48,7 @@ public class SecurityConfig {
         );
         http.cors(cors -> cors.configurationSource(request -> {
             CorsConfiguration configuration = new CorsConfiguration();
-            configuration.setAllowedOrigins(List.of("https://*.overhare.com", "http://localhost:4200"));
+            configuration.setAllowedOrigins(List.of("https://*.overhare.com", "http://localhost:4200", "https://*.helpdesk.gt"));
             configuration.setAllowedMethods(List.of(
                     "GET", "POST", "PUT", "DELETE", "PATCH", "OPTIONS"
             ));
