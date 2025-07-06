@@ -59,11 +59,11 @@
       <tbody>
         @for (ticket of tickets; track ticket.uuid) {
         <tr>
-          <td>{{ ticket.ownTicket }}</td>
-          <td>{{ ticket.providerTicket }}</td>
+          <td><app-auto-link url="{{ ticket.ownTicket }}"></app-auto-link></td>
+          <td><app-auto-link url="{{ ticket.providerTicket }}"></app-auto-link></td>
           <td>{{ ticket.openedBy }}</td>
           <td>{{ ticket.assignedTo }}</td>
-          <td>{{ ticket.requiredBy }}</td>
+          <td><app-auto-link url="{{ ticket.requiredBy }}"></app-auto-link></td>
           <td>
             <div>
               <span [style.color]="ticket.ownStatus.color">{{ ticket.ownStatus.name }}</span>
@@ -103,7 +103,7 @@
 
           <!-- ID Ticket Propio -->
           <nz-form-item>
-            <nz-form-label [nzRequired]="true">ID Ticket Propio</nz-form-label>
+            <nz-form-label [nzRequired]="true">Ticket Propio</nz-form-label>
             <nz-form-control nzErrorTip="Por favor ingrese el ID del ticket propio">
               <input nz-input formControlName="ownTicket" placeholder="ej., R-19123"
                 [class.error]="isFieldInvalid('ownTicket')" />
@@ -112,7 +112,7 @@
 
           <!-- ID Ticket Proveedor -->
           <nz-form-item>
-            <nz-form-label [nzRequired]="true">ID Ticket Proveedor</nz-form-label>
+            <nz-form-label [nzRequired]="true">Ticket Proveedor</nz-form-label>
             <nz-form-control nzErrorTip="Por favor ingrese el ID del ticket del proveedor">
               <input nz-input formControlName="providerTicket" placeholder="ej., I-00123"
                 [class.error]="isFieldInvalid('providerTicket')" />

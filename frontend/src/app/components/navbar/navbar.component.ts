@@ -53,7 +53,7 @@ import { UserService } from '../../services/user.service';
               alt="overhare"
               class="h-10 w-10"
             />
-            <span class="text-lg font-bold ml-2">Helpdesk</span>
+            <span class="text-lg font-bold ml-2">Helpdesk V.1</span>
           </div>
           <div class="space-x-4 mb-6 mt-6 flex md:gap-28 gap-5">
             <!-- <a class="flex flex-row items-center gap-2" routerLink="dashboard">

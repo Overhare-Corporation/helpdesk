@@ -28,6 +28,7 @@ import {
   ApiResponse,
   PaginatedResponse
 } from '../../models/dashboard';
+import { AutoLinkComponent } from "../../components/auto-link/auto-link.component";
 
 @Component({
   selector: 'app-dashboard',
@@ -44,7 +45,8 @@ import {
     NzCardModule,
     ReactiveFormsModule,
     NzPopconfirmModule,
-  ],
+    AutoLinkComponent,
+],
   templateUrl: './dashboard.component.html',
   styleUrl: './dashboard.component.css',
 })
@@ -115,7 +117,7 @@ export class DashboardComponent implements OnInit {
 
   private loadTickets(): void {
     this.isLoadingTickets = true;
-    this.userService.getTickets(0, 10).subscribe({
+    this.userService.getTickets(0, 300).subscribe({
       next: (response: ApiResponse<PaginatedResponse<Ticket>>) => {
         this.tickets = response.data.content;
         this.isLoadingTickets = false;

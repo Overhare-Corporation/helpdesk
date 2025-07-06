@@ -1,6 +1,12 @@
 import { CommonModule } from '@angular/common';
 import { Component, OnInit } from '@angular/core';
-import { FormBuilder, FormGroup, FormsModule, ReactiveFormsModule, Validators } from '@angular/forms';
+import {
+  FormBuilder,
+  FormGroup,
+  FormsModule,
+  ReactiveFormsModule,
+  Validators,
+} from '@angular/forms';
 import { LucideAngularModule, Eye, EyeClosed } from 'lucide-angular';
 import { RouterOutlet } from '@angular/router';
 import { NotificationService } from './services/notification.service';
@@ -8,12 +14,17 @@ import { NotificationService } from './services/notification.service';
 @Component({
   selector: 'app-root',
   standalone: true,
-  imports: [ FormsModule, CommonModule, ReactiveFormsModule, LucideAngularModule, RouterOutlet],
+  imports: [
+    FormsModule,
+    CommonModule,
+    ReactiveFormsModule,
+    LucideAngularModule,
+    RouterOutlet,
+  ],
   templateUrl: './app.component.html',
-  styleUrl: './app.component.css'
+  styleUrl: './app.component.css',
 })
 export class AppComponent implements OnInit {
-
   title = 'Helpdesk';
 
   constructor(private notificationService: NotificationService) {}
