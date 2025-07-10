@@ -1,5 +1,7 @@
 import { Component, Input, OnInit } from '@angular/core';
-import { PageTitleService } from '../../services/page-title-service.service';
+import { HttpClient } from '@angular/common/http';
+import { Observable } from 'rxjs';
+import { catchError, map } from 'rxjs/operators';
 
 @Component({
   selector: 'app-auto-link',
@@ -13,15 +15,15 @@ export class AutoLinkComponent implements OnInit {
   @Input() url: string = '';
   pageTitle: string = '';
 
-  constructor(private pageTitleService: PageTitleService) { }
+  constructor(private http: HttpClient) { }
 
   ngOnInit() {
     if (this.url) {
       // Si es una URL externa, obtener el título
       if (this.isExternalUrl(this.url)) {
-        this.pageTitleService.getPageTitle(this.url).subscribe(
+        this.getPageTitle(this.url).subscribe(
           title => this.pageTitle = title,
-          error => this.pageTitle = this.extractNameFromUrl(this.url)
+          error => this.pageTitle = 'Error al obtener título'
         );
       } else {
         // Si es una ruta interna, usar el nombre de la ruta
@@ -34,17 +36,29 @@ export class AutoLinkComponent implements OnInit {
     return url.startsWith('http://') || url.startsWith('https://');
   }
 
+  private getPageTitle(url: string): Observable<string> {
+    return this.http.get(url, { responseType: 'text' }).pipe(
+      map(response => this.extractTitleFromHtml(response)),
+      catchError(() => {
+        // En caso de error, devolver un título por defecto
+        return ['Error al obtener título'];
+      })
+    );
+  }
+
+  private extractTitleFromHtml(html: string): string {
+    const titleMatch = html.match(/<title>(.*?)<\/title>/i);
+    return titleMatch ? titleMatch[1] : 'Sin título';
+  }
+
   private extractNameFromUrl(url: string): string {
     try {
       const urlObj = new URL(url);
       const pathSegments = urlObj.pathname.split('/').filter(segment => segment);
-
       if (pathSegments.length > 0) {
-        // Tomar el último segmento y formatearlo
         const lastSegment = pathSegments[pathSegments.length - 1];
         return this.formatSegmentName(lastSegment);
       }
-
       return urlObj.hostname || 'Página';
     } catch {
       // Si no es una URL válida, extraer el nombre del path
