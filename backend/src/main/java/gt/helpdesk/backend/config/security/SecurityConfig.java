@@ -39,6 +39,7 @@ public class SecurityConfig {
                 .authorizeHttpRequests(
                         authorizeRequests -> authorizeRequests
                                 .requestMatchers(HttpMethod.GET, "/actuator/health").permitAll()
+                                .requestMatchers(HttpMethod.GET, "/webhooks/*").permitAll()
                                 .requestMatchers(HttpMethod.GET, "/.well-known/*").permitAll()
                                 .anyRequest().authenticated()
                 );
@@ -48,7 +49,7 @@ public class SecurityConfig {
         );
         http.cors(cors -> cors.configurationSource(request -> {
             CorsConfiguration configuration = new CorsConfiguration();
-            configuration.setAllowedOrigins(List.of("https://*.overhare.com", "http://localhost:4200", "https://self.helpdesk.gt"));
+            configuration.setAllowedOrigins(List.of("https://*.overhare.com", "http://localhost:4200", "https://self.helpdesk.gt", "https://make.powerapps.com", "https://make.powerautomate.com"));
             configuration.setAllowedMethods(List.of(
                     "GET", "POST", "PUT", "DELETE", "PATCH", "OPTIONS"
             ));
